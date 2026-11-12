@@ -1,7 +1,7 @@
 # GenTech POS
 
 A point-of-sale (POS) web application for small retail stores and cafés. Built with
-Next.js (App Router), Prisma, and SQLite. It supports sales checkout, product and
+Next.js (App Router), Prisma, and PostgreSQL. It supports sales checkout, product and
 inventory management, customer records, staff accounts with role-based access,
 reporting, and emailed receipts.
 
@@ -31,7 +31,7 @@ reporting, and emailed receipts.
 ## Tech stack
 
 - **Framework:** [Next.js 16](https://nextjs.org/) (App Router) + React 19
-- **Database:** SQLite via [Prisma](https://www.prisma.io/) ORM
+- **Database:** [PostgreSQL](https://www.postgresql.org/) via [Prisma](https://www.prisma.io/) ORM (pooled + direct connections, e.g. Neon / Vercel Postgres)
 - **Auth:** JWT sessions signed with [`jose`](https://github.com/panva/jose); passwords hashed with `bcryptjs`
 - **Email:** [Nodemailer](https://nodemailer.com/)
 - **Styling:** [Tailwind CSS](https://tailwindcss.com/) v4
@@ -41,6 +41,7 @@ reporting, and emailed receipts.
 ### Prerequisites
 
 - Node.js 18+ and npm
+- A PostgreSQL database (a free [Neon](https://neon.tech/) or [Vercel Postgres](https://vercel.com/storage/postgres) instance works)
 
 ### 1. Install dependencies
 
@@ -58,19 +59,17 @@ cp .env.example .env
 
 | Variable | Description |
 | --- | --- |
-| `DATABASE_URL` | SQLite connection string. Default: `file:./dev.db` |
+| `DATABASE_URL` | Pooled PostgreSQL connection string used by the app at runtime. |
+| `DATABASE_URL_UNPOOLED` | Direct PostgreSQL connection used for migrations / schema push. |
 | `AUTH_SECRET` | Secret used to sign session JWTs. Use a random string of at least 32 characters. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | Optional SMTP settings for emailing receipts. If left blank, a temporary Ethereal test inbox is used and a preview link is returned instead of real delivery. |
 
 ### 3. Set up the database
 
 ```bash
-npx prisma migrate dev
-npm run seed
+npx prisma db push   # create the schema in your PostgreSQL database
+npm run seed         # seed sample products, customers, and demo users
 ```
-
-This creates the SQLite database, applies migrations, and seeds sample products,
-customers, and two demo users.
 
 ### 4. Run the dev server
 
@@ -96,7 +95,7 @@ The seed script creates two accounts:
 | Command | Description |
 | --- | --- |
 | `npm run dev` | Start the development server |
-| `npm run build` | Build for production |
+| `npm run build` | Generate the Prisma client, push the schema, and build for production |
 | `npm run start` | Start the production server |
 | `npm run lint` | Run the linter |
 | `npm run seed` | Seed the database with sample data |
@@ -110,7 +109,7 @@ app/
   login/        Login page
 components/      Shared UI (Sidebar, Receipt, BarChart, ThemeToggle)
 lib/            Auth, session, Prisma client, mailer, formatting helpers
-prisma/         Schema, migrations, and seed script
+prisma/         Schema and seed script
 ```
 
 ## License
